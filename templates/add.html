@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add a book · Book Log</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero simple">
+        <div>
+          <p class="eyebrow">Add entry</p>
+          <h1>Add a new book</h1>
+          <p class="subtitle">Capture what you plan to read or just finished.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="button secondary" href="{{ url_for('index') }}">Back to log</a>
+        </div>
+      </header>
+
+      <section class="card form-card">
+        <form method="post">
+          <label>
+            Title
+            <input
+              type="text"
+              name="title"
+              placeholder="The Name of the Wind"
+              value="{{ form_data.title if form_data else '' }}"
+              required
+            />
+          </label>
+          <label>
+            Author
+            <input
+              type="text"
+              name="author"
+              placeholder="Patrick Rothfuss"
+              value="{{ form_data.author if form_data else '' }}"
+            />
+          </label>
+          <label>
+            Notes
+            <textarea
+              name="notes"
+              rows="4"
+              placeholder="Why you want to read it, a quick review, or a quote."
+            >{{ form_data.notes if form_data else '' }}</textarea>
+          </label>
+
+          {% if error %}
+            <p class="error">{{ error }}</p>
+          {% endif %}
+
+          <div class="card-actions">
+            <button class="button" type="submit">Save book</button>
+            <a class="button ghost" href="{{ url_for('index') }}">Cancel</a>
+          </div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
