@@ -35,6 +35,28 @@ def create_app() -> Flask:
             )
         return render_template("add.html", error=None, form_data=None)
 
+    @app.route("/edit/<int:book_id>", methods=["GET", "POST"])
+    def edit_book(book_id: int) -> str:
+        book = fetch_book(book_id)
+        if not book:
+            return redirect(url_for("index"))
+
+        if request.method == "POST":
+            title = request.form.get("title", "").strip()
+            author = request.form.get("author", "").strip()
+            notes = request.form.get("notes", "").strip()
+            if title:
+                update_book(book_id=book_id, title=title, author=author, notes=notes)
+                return redirect(url_for("index"))
+            return render_template(
+                "edit.html",
+                error="Please provide a title.",
+                form_data={"title": title, "author": author, "notes": notes},
+                book=book,
+            )
+
+        return render_template("edit.html", error=None, form_data=book, book=book)
+
     @app.post("/toggle/<int:book_id>")
     def toggle_book(book_id: int) -> str:
         toggle_read(book_id)
@@ -74,11 +96,30 @@ def fetch_books() -> list[dict[str, str | int]]:
     return [dict(row) for row in rows]
 
 
+def fetch_book(book_id: int) -> dict[str, str | int] | None:
+    with sqlite3.connect(DB_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            "SELECT id, title, author, notes, is_read, created_at FROM books WHERE id = ?",
+            (book_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def insert_book(*, title: str, author: str, notes: str) -> None:
     with sqlite3.connect(DB_PATH) as connection:
         connection.execute(
             "INSERT INTO books (title, author, notes) VALUES (?, ?, ?)",
             (title, author or None, notes or None),
+        )
+        connection.commit()
+
+
+def update_book(*, book_id: int, title: str, author: str, notes: str) -> None:
+    with sqlite3.connect(DB_PATH) as connection:
+        connection.execute(
+            "UPDATE books SET title = ?, author = ?, notes = ? WHERE id = ?",
+            (title, author or None, notes or None, book_id),
         )
         connection.commit()
 
