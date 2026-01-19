@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Book Log</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Personal Library</p>
+          <h1>Book Log</h1>
+          <p class="subtitle">Track what you want to read and celebrate finished books.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="button" href="{{ url_for('add_book') }}">Add a book</a>
+        </div>
+      </header>
+
+      <section class="stats">
+        <div>
+          <p class="stat-label">Total books</p>
+          <p class="stat-value">{{ stats.total }}</p>
+        </div>
+        <div>
+          <p class="stat-label">Read</p>
+          <p class="stat-value">{{ stats.read }}</p>
+        </div>
+        <div>
+          <p class="stat-label">Unread</p>
+          <p class="stat-value">{{ stats.unread }}</p>
+        </div>
+      </section>
+
+      {% if books %}
+        <section class="grid">
+          {% for book in books %}
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <h2>{{ book.title }}</h2>
+                  {% if book.author %}
+                    <p class="meta">By {{ book.author }}</p>
+                  {% endif %}
+                </div>
+                <span class="badge {{ 'read' if book.is_read else 'unread' }}">
+                  {{ 'Read' if book.is_read else 'Unread' }}
+                </span>
+              </div>
+              {% if book.notes %}
+                <p class="notes">{{ book.notes }}</p>
+              {% endif %}
+              <div class="card-actions">
+                <form method="post" action="{{ url_for('toggle_book', book_id=book.id) }}">
+                  <button class="button secondary" type="submit">
+                    Mark as {{ 'unread' if book.is_read else 'read' }}
+                  </button>
+                </form>
+                <form method="post" action="{{ url_for('delete_book', book_id=book.id) }}">
+                  <button class="button ghost" type="submit">Delete</button>
+                </form>
+              </div>
+            </article>
+          {% endfor %}
+        </section>
+      {% else %}
+        <section class="empty-state">
+          <h2>Your log is empty</h2>
+          <p>Add your first book to start tracking your reading goals.</p>
+          <a class="button" href="{{ url_for('add_book') }}">Add a book</a>
+        </section>
+      {% endif %}
+    </main>
+  </body>
+</html>
