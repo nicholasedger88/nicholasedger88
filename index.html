@@ -469,9 +469,11 @@
           <h3>Free · Weekly</h3>
           <div class="price">£0 <small>forever</small></div>
           <p>One email per week. Perfect for a quick pulse on global markets.</p>
-          <label for="email" class="email-hint">Email address</label>
-          <input id="email" class="email-input" type="email" placeholder="you@example.com" autocomplete="email" />
-          <button class="button primary" type="button">Get Free</button>
+          <form action="/signup" method="post">
+            <label for="email" class="email-hint">Email address</label>
+            <input id="email" name="email" class="email-input" type="email" placeholder="you@example.com" autocomplete="email" required />
+            <button class="button primary" type="submit">Get Free</button>
+          </form>
           <p class="email-hint">Shortcut: press Cmd/Ctrl+K to focus this field.</p>
         </div>
         <div class="card pricing-card pricing-highlight">
