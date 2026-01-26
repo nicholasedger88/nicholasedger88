@@ -1,41 +1,42 @@
+import os
 from datetime import datetime
-from typing import Any
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, create_engine
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
-DB_URL = "sqlite:///markets.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
 
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 
 Base = declarative_base()
 
 
-class User(Base):
-    __tablename__ = "users"
+class Subscriber(Base):
+    __tablename__ = "subscribers"
 
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, nullable=False)
-    plan = Column(String, nullable=False, default="free_weekly")
-    is_active = Column(Boolean, default=True)
+    status = Column(String, nullable=False, default="waitlist")
     created_at = Column(DateTime, default=datetime.utcnow)
+    last_sent_at = Column(DateTime, nullable=True)
     unsubscribe_token = Column(String, unique=True, nullable=False)
-    watchlist = Column(JSON, default=list)
+    is_active = Column(Boolean, default=True)
 
-    send_logs = relationship("SendLog", back_populates="user")
+    send_logs = relationship("SendLog", back_populates="subscriber")
 
 
 class SendLog(Base):
     __tablename__ = "send_logs"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    subscriber_id = Column(Integer, ForeignKey("subscribers.id"), nullable=False)
     sent_at = Column(DateTime, default=datetime.utcnow)
     period = Column(String, nullable=False)
     status = Column(String, nullable=False)
+    error_message = Column(String, nullable=True)
 
-    user = relationship("User", back_populates="send_logs")
+    subscriber = relationship("Subscriber", back_populates="send_logs")
 
 
 def init_db() -> None:

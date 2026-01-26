@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Markets in 90 Seconds</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; color: #111; margin: 0; padding: 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background: #fbfbfb;">
+      <tr>
+        <td style="padding: 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 16px;">
+            <tr>
+              <td style="padding: 24px;">
+                <h1 style="margin: 0 0 8px; font-size: 22px;">Markets in 90 Seconds</h1>
+                <p style="margin: 0 0 16px; color: #555;">{{ summary }}</p>
+                <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                  {% for tile in tiles %}
+                  <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+                      <strong>{{ tile.name }}</strong><br />
+                      <span style="color: #555;">1D {{ tile.change_1d }} · 5D {{ tile.change_5d }} · YTD {{ tile.change_ytd }}</span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </table>
+                <p style="margin-top: 24px; font-size: 12px; color: #777;">
+                  Unsubscribe: <a href="{{ unsubscribe_url }}">{{ unsubscribe_url }}</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

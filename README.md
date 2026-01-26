@@ -1,15 +1,6 @@
 # Markets in 90 Seconds
 
-Minimal Flask app for a calm, daily or weekly markets summary email.
-
-## Features
-- Static landing page served from `index.html`.
-- Email subscriptions with free weekly and paid daily plans.
-- SQLite + SQLAlchemy models for users and send logs.
-- Market data from Yahoo Finance (indices, FX, rates) and CoinGecko (gold via PAXG proxy).
-- Stripe Checkout for subscriptions.
-- SendGrid delivery with SMTP fallback.
-- APScheduler background jobs for daily and weekly sends.
+Minimal Flask MVP for a calm market digest list with paid gating via Gumroad import.
 
 ## Setup
 
@@ -20,35 +11,64 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Populate `.env` with your keys.
-Set `BASE_URL` to the public origin for unsubscribe links.
+Edit `.env` with your email provider and database settings.
 
-## Run the app
+## Run
 
 ```bash
 python app.py
 ```
 
-## Stripe setup
-- Create a product + recurring price in Stripe.
-- Set `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID`.
-- The app creates a Checkout Session at `/create-checkout` and upgrades users after `/success`.
+Open http://localhost:5000 to see the landing page.
 
-## SendGrid or SMTP
-- If `SENDGRID_API_KEY` is set, SendGrid is used.
-- Otherwise the app falls back to SMTP using `SMTP_HOST`, `SMTP_USER`, and `SMTP_PASSWORD`.
+## Send commands
 
-## Scheduler
-- Daily: 07:15 UTC (pro_daily users)
-- Weekly: Sunday 08:00 UTC (free_weekly users)
-
-Disable the scheduler by setting `START_SCHEDULER=false`.
-
-## Admin
-`/admin/stats` is protected by `ADMIN_KEY` via header `X-Admin-Key` or query param `?key=`.
-
-Example:
+Paid subscribers are emailed via Flask CLI commands:
 
 ```bash
-curl -H "X-Admin-Key: $ADMIN_KEY" http://localhost:5000/admin/stats
+flask --app app send-daily
+flask --app app send-weekly
 ```
+
+- `send-daily` sends to paid subscribers who have not received an email today.
+- `send-weekly` sends to paid subscribers who have not received an email in the last 6 days.
+
+## Gumroad import
+
+Export buyers from Gumroad as CSV and run:
+
+```bash
+python scripts/import_gumroad_csv.py path/to/gumroad.csv
+```
+
+The script upserts subscribers, setting status to `paid`.
+
+## Email providers
+
+Set `EMAIL_PROVIDER` to `smtp` or `sendgrid`.
+
+### SMTP (Gmail app password)
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@gmail.com
+SMTP_PASS=app-password
+SMTP_FROM=your@gmail.com
+```
+
+### SendGrid
+```
+EMAIL_PROVIDER=sendgrid
+SENDGRID_API_KEY=your-key
+SMTP_FROM=hello@marketsin90seconds.com
+```
+
+## Environment variables
+- `FLASK_SECRET_KEY`: Flask session key.
+- `DATABASE_URL`: SQLAlchemy database URL (default `sqlite:///app.db`).
+- `EMAIL_PROVIDER`: `smtp` or `sendgrid`.
+- `SMTP_*`: SMTP credentials.
+- `SENDGRID_API_KEY`: SendGrid API key.
+- `SMTP_FROM`: From address for both providers.
+- `BASE_URL`: Public base URL for unsubscribe links.
+- `PORT`: Flask port.

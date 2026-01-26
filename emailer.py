@@ -2,56 +2,59 @@ import os
 import smtplib
 from email.message import EmailMessage
 from pathlib import Path
-from typing import List, Tuple
 
 import requests
 from jinja2 import Template
 
-from markets import MarketSnapshot
+from digest import Digest
 
 BASE_DIR = Path(__file__).resolve().parent
 
 
-def build_email_content(
-    markets: List[MarketSnapshot],
-    summary: str,
-    unsubscribe_url: str,
-) -> Tuple[str, str, str]:
-    subject = "Markets in 90 Seconds"
-    text_lines = [
-        "Markets in 90 Seconds",
-        summary,
-        "",
-        "Markets:",
-    ]
-    for market in markets:
-        text_lines.append(
-            f"- {market.name}: {market.change_1d:+.2f}% (1D), {market.change_5d:+.2f}% (5D), {market.change_ytd:+.2f}% (YTD)"
-        )
-    text_lines.append("")
-    text_lines.append(f"Unsubscribe: {unsubscribe_url}")
-    text_body = "\n".join(text_lines)
+def send_digest_email(subscriber, digest: Digest) -> None:
+    provider = os.getenv("EMAIL_PROVIDER", "smtp").lower()
+    html_body = _render_html(digest, subscriber)
+    text_body = _render_text(digest, subscriber)
+    if provider == "sendgrid":
+        _send_via_sendgrid(subscriber.email, digest.subject, text_body, html_body)
+    else:
+        _send_via_smtp(subscriber.email, digest.subject, text_body, html_body)
 
-    template_path = BASE_DIR / "templates" / "email.html"
+
+def _render_html(digest: Digest, subscriber) -> str:
+    template_path = BASE_DIR / "templates" / "email_digest.html"
     template = Template(template_path.read_text(encoding="utf-8"))
-    html_body = template.render(
-        summary=summary,
-        markets=markets,
-        unsubscribe_url=unsubscribe_url,
+    return template.render(
+        summary=digest.summary,
+        tiles=digest.tiles,
+        unsubscribe_url=_unsubscribe_url(subscriber),
     )
-    return subject, text_body, html_body
 
 
-def send_email(to_email: str, subject: str, text_body: str, html_body: str) -> None:
-    if os.getenv("SENDGRID_API_KEY"):
-        _send_via_sendgrid(to_email, subject, text_body, html_body)
-        return
-    _send_via_smtp(to_email, subject, text_body, html_body)
+def _render_text(digest: Digest, subscriber) -> str:
+    lines = [digest.subject, digest.summary, "", "Markets:"]
+    for tile in digest.tiles:
+        lines.append(
+            f"- {tile.name}: {tile.change_1d} (1D), {tile.change_5d} (5D), {tile.change_ytd} (YTD)"
+        )
+    lines.append("")
+    lines.append(f"Unsubscribe: {_unsubscribe_url(subscriber)}")
+    return "\n".join(lines)
+
+
+def _unsubscribe_url(subscriber) -> str:
+    base_url = os.getenv("BASE_URL", "http://localhost:5000/")
+    if not base_url.endswith("/"):
+        base_url = f"{base_url}/"
+    return f"{base_url}u/{subscriber.unsubscribe_token}"
 
 
 def _send_via_sendgrid(to_email: str, subject: str, text_body: str, html_body: str) -> None:
     api_key = os.getenv("SENDGRID_API_KEY")
-    from_email = os.getenv("FROM_EMAIL", "hello@marketsin90seconds.com")
+    from_email = os.getenv("SMTP_FROM", "hello@marketsin90seconds.com")
+    if not api_key:
+        raise RuntimeError("SENDGRID_API_KEY is required for sendgrid provider.")
+
     payload = {
         "personalizations": [{"to": [{"email": to_email}]}],
         "from": {"email": from_email},
@@ -63,22 +66,22 @@ def _send_via_sendgrid(to_email: str, subject: str, text_body: str, html_body: s
     }
     response = requests.post(
         "https://api.sendgrid.com/v3/mail/send",
-        json=payload,
         headers={"Authorization": f"Bearer {api_key}"},
+        json=payload,
         timeout=10,
     )
     response.raise_for_status()
 
 
 def _send_via_smtp(to_email: str, subject: str, text_body: str, html_body: str) -> None:
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    from_email = os.getenv("FROM_EMAIL", smtp_user or "hello@marketsin90seconds.com")
+    host = os.getenv("SMTP_HOST")
+    port = int(os.getenv("SMTP_PORT", "587"))
+    user = os.getenv("SMTP_USER")
+    password = os.getenv("SMTP_PASS")
+    from_email = os.getenv("SMTP_FROM", user or "hello@marketsin90seconds.com")
 
-    if not smtp_host:
-        raise RuntimeError("SMTP is not configured and SENDGRID_API_KEY is missing.")
+    if not host:
+        raise RuntimeError("SMTP_HOST is required for smtp provider.")
 
     message = EmailMessage()
     message["Subject"] = subject
@@ -87,8 +90,8 @@ def _send_via_smtp(to_email: str, subject: str, text_body: str, html_body: str) 
     message.set_content(text_body)
     message.add_alternative(html_body, subtype="html")
 
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
+    with smtplib.SMTP(host, port) as server:
         server.starttls()
-        if smtp_user and smtp_password:
-            server.login(smtp_user, smtp_password)
+        if user and password:
+            server.login(user, password)
         server.send_message(message)
