@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Markets in 90 Seconds</title>
+  <style>
+    :root {
+      --ink: #111111;
+      --muted: #5a5a5a;
+      --paper: #fbfbfb;
+      --accent-red: #e53935;
+      --accent-blue: #1e4bdb;
+      --accent-yellow: #f5c518;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .container {
+      width: min(960px, 92vw);
+      margin: 0 auto;
+      padding: 3rem 0 4rem;
+      display: grid;
+      gap: 2.5rem;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: inset -6px -6px 0 rgba(0, 0, 0, 0.08);
+    }
+
+    .hero {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 36rem;
+      line-height: 1.6;
+    }
+
+    .accent-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .accent {
+      width: 60px;
+      height: 6px;
+      border-radius: 999px;
+    }
+
+    .accent.red { background: var(--accent-red); }
+    .accent.blue { background: var(--accent-blue); }
+    .accent.yellow { background: var(--accent-yellow); }
+
+    form {
+      display: grid;
+      gap: 0.75rem;
+      max-width: 420px;
+    }
+
+    input {
+      padding: 0.8rem 1rem;
+      border-radius: 999px;
+      border: 1px solid #d9d9d9;
+      font-size: 1rem;
+    }
+
+    button {
+      border: none;
+      background: var(--accent-red);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover,
+    button:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .note {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      padding: 1.5rem;
+    }
+
+    .status {
+      font-weight: 600;
+      color: var(--accent-blue);
+    }
+
+    @media (min-width: 768px) {
+      .hero {
+        grid-template-columns: 1.2fr 0.8fr;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="nav">
+      <div class="logo" aria-hidden="true"></div>
+      <div>Markets in 90 Seconds</div>
+    </div>
+
+    <section class="hero">
+      <div>
+        <h1>Know the markets in 90 seconds.</h1>
+        <p>A calm daily or weekly digest of the markets that matter, written in plain English with zero noise.</p>
+        <div class="accent-row" aria-hidden="true">
+          <div class="accent red"></div>
+          <div class="accent blue"></div>
+          <div class="accent yellow"></div>
+        </div>
+      </div>
+      <div class="card">
+        {% if request.args.get('success') %}
+          <div class="status">Thanks — you’re on the list.</div>
+          <p class="note">We’ll email you when the next digest is ready.</p>
+        {% endif %}
+        {% if error %}
+          <div class="status" style="color: var(--accent-red);">{{ error }}</div>
+        {% endif %}
+        <form action="/signup" method="post">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required />
+          <button type="submit">Join free</button>
+          <p class="note">No charts. No noise. One calm email at a time.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
